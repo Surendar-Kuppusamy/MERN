@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
 import { Formik, Form, FieldArray, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import DatePicker from "react-datepicker";
@@ -8,6 +7,7 @@ import CreatableSelect from 'react-select/creatable';
 import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 import { parse, isDate } from "date-fns";
+import { useSelector, useDispatch }  from 'react-redux';
 import StepWizard from "react-step-wizard";
 import { SITE_LOADER, ALL_OPTIONS, SET_WHO_CAN_CONTACT_OPTIONS } from '../../../actions/constants';
 import { getAllOptions, createAsset } from '../../../actions/assetActions';
@@ -18,6 +18,17 @@ import AssetAddFormWizzardStep4 from './AssetAddFormWizzardStep4';
 import AssetAddFormWizzardStep5 from './AssetAddFormWizzardStep5';
 import AssetAddFormWizzardStep6 from './AssetAddFormWizzardStep6';
 import AssetAddFormWizzardStep7 from './AssetAddFormWizzardStep7';
+
+const LoadingIndicator = props => {
+    return (
+      <div content={'Custom Loader'} className="select-loader">
+        <div className="spinner-border spinner-border-sm text-primary" role="status">
+            <span className="visually-hidden"> Loading...</span>
+        </div>
+        <span>  Loading...</span>
+      </div>
+    );
+};
 
 const onSelectMultipleChange = (value, actionMeta, field, values, setFieldValue) => {
     var loader = field+'_is_loading';
@@ -43,36 +54,7 @@ const onSelectMultipleChange = (value, actionMeta, field, values, setFieldValue)
     setFieldValue(loader, false);
 };
 
-
-
-const onDobDateChange = (e, field, values, setFieldValue) => {
-    var asset_available_on_from = e.getFullYear()+'-'+(e.getMonth() + 1)+'-'+e.getDate();
-    setFieldValue(field, asset_available_on_from);
-};    
-
-const onClickDMYTypes = (e, field, values, setFieldValue) => {
-    setFieldValue(field, e.value);
-}
-
-const mapStateToProps = (state) => {
-    return {
-        assetState: state.assetState
-    };
-}
-
-const mapDispatchToProps = dispatch => {
-    return {
-        getoptions: () => {
-            dispatch(getAllOptions());
-        }
-    }   
-}
-
 function AddAssets(props) {
-    /* const dispatch = useDispatch();
-    dispatch({type: ALL_OPTIONS, payload: {'te': 'function'}});
-    const assetState = useSelector((state) => state.assetState) */
-
     const customStyles = {
         singleValue: (provided, state) => {
           const color = state.selectProps.isLoading ? 'white' : 'black';
@@ -84,22 +66,32 @@ function AddAssets(props) {
           }
     }
 
-    const assetState = useSelector((state) => state.assetState)
-    console.log(assetState);
-    if(Object.keys(props.assetState.alloptions).length == 0) {
-        props.getoptions();
-        console.log(assetState);
+    const mapStateToProps = (state) => {
+        return {
+          //todos: getVisibleTodos(state.todos, state.visibilityFilter)
+          all_options: getAllOptions()
+        };
     }
 
+    const mapDispatchToProps = (dispatch) => {
+        return {
+            addAsset: (values) => {
+                dispatch(createAsset(values))
+            }
+        }
+    }
+
+    const dispatch = useDispatch();
+    const all_options = useSelector((state) => state.defaultReducers.all_options);
     const onSelectChange = (e, field, values, setFieldValue, loader) => {
         var loader = field+'_is_loading';
         setFieldValue(loader, true);
         if(e.__isNew__) {
             //Save and select
-            assetState.alloptions.city_options.push({'label': 'Loading', 'value': 0});
+            all_options.city_options.push({'label': 'Loading', 'value': 0});
             setFieldValue(field, 0);
             setTimeout(function() {
-                assetState.alloptions.city_options.unshift({'label': e.value, 'value': e.value});
+                all_options.city_options.unshift({'label': e.value, 'value': e.value});
                 setFieldValue(loader, false);
                 setFieldValue(field, e.value);
                 //setFieldValue(field, 0);
@@ -109,15 +101,27 @@ function AddAssets(props) {
             setFieldValue(loader, false);
         }
     };
+
     
-    /* const onClickRoomsTypes = (e, field, index, values, setFieldValue) => {
+    
+    const onDobDateChange = (e, field, values, setFieldValue) => {
+        var asset_available_on_from = e.getFullYear()+'-'+(e.getMonth() + 1)+'-'+e.getDate();
+        setFieldValue(field, asset_available_on_from);
+    };    
+    
+    const onClickDMYTypes = (e, field, values, setFieldValue) => {
+        setFieldValue(field, e.value);
+    }
+
+    
+    const onClickRoomsTypes = (e, field, index, values, setFieldValue) => {
         console.log(values);
         setFieldValue(field, e.value);
     }
 
     const handleRoomChange = (e, index, field, room, setFieldValue) => {
         setFieldValue(room[field], e.value);
-    }; */
+    };
 
     const initialValues = {
         user_id: 0,
@@ -420,18 +424,18 @@ function AddAssets(props) {
                             </pre>
                         
                             <StepWizard transitions={custom}>
-                                <AssetAddFormWizzardStep1 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} />
-                                <AssetAddFormWizzardStep2 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} />
+                                <AssetAddFormWizzardStep1 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} />
+                                <AssetAddFormWizzardStep2 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} />
                                 { (values.type_of_asset == 'Appartment' || values.type_of_asset == 'House') &&
-                                    <AssetAddFormWizzardStep3 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} onClickDMYTypes={onClickDMYTypes} />
+                                    <AssetAddFormWizzardStep3 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} onClickDMYTypes={onClickDMYTypes} />
                                 }
-                                <AssetAddFormWizzardStep4 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} onClickDMYTypes={onClickDMYTypes} />
-                                <AssetAddFormWizzardStep5 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} />
-                                <AssetAddFormWizzardStep6 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} onDobDateChange={onDobDateChange} />
+                                <AssetAddFormWizzardStep4 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} onClickDMYTypes={onClickDMYTypes} />
+                                <AssetAddFormWizzardStep5 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} />
+                                <AssetAddFormWizzardStep6 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} onDobDateChange={onDobDateChange} />
                                 { (values.type_of_asset == 'Appartment' || values.type_of_asset == 'House') &&
-                                    <AssetAddFormWizzardStep7 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={assetState.alloptions} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} onDobDateChange={onDobDateChange} />
+                                    <AssetAddFormWizzardStep7 formikProps={{ errors, values, field, touched, setTouched, validateField, setFieldTouched, setValues, setFieldValue, handleChange, handleBlur }} all_options={all_options} customStyles={customStyles} onSelectChange={onSelectChange} onSelectMultipleChange={onSelectMultipleChange} onClickDMYTypes={onClickDMYTypes} onDobDateChange={onDobDateChange} />
                                 }
-                            </StepWizard>
+                            </StepWizard>   
                             <div className="mb-2 mt-2">
                                 <button className="btn btn-primary" type="submit">
                                     Submit
@@ -444,4 +448,4 @@ function AddAssets(props) {
         </section>
     );
 }
-export default connect(mapStateToProps, mapDispatchToProps)(AddAssets);
+export default AddAssets;

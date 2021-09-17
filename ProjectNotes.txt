@@ -20,3 +20,5 @@ npm i --save react-select
 npm i dotenv
 npm i @popperjs/core    // Not useable
 npm i react-dropdown
+npm install react-step-wizard
+npm i react-dropzone

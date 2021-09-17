@@ -142,6 +142,7 @@ function defaultReducers(state = initialState, action) {
         return { ...state, asset_length_width_options: asset_length_width_options }
       }
       case ALL_OPTIONS: {
+        console.log(action);
         return { ...state, all_options: all_options }
       }
       default:
